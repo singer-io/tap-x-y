@@ -1,9 +1,8 @@
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-import humps
 import singer
-from singer import Transformer, metadata, utils
+from singer import utils
 from singer.utils import strptime_to_utc
 
 LOGGER = singer.get_logger()
