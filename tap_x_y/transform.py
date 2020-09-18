@@ -63,7 +63,7 @@ def denest(this_json):
     elif isinstance(this_json, list):
         for item in this_json:
             denest(item)
-        
+
     return new_json
 
 def transform(this_json):

@@ -47,7 +47,7 @@ def sync(client, config, catalog, state):
             stream.write_schema()
             stream_metadata = metadata.to_map(catalog_entry.metadata)
             max_bookmark_value = None
-            
+
             with singer.metrics.job_timer(job_type=stream.name) as timer:
                 with singer.metrics.record_counter(
                         endpoint=stream.name) as counter:
