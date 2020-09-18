@@ -3,8 +3,7 @@ from datetime import datetime, timedelta
 
 import humps
 import singer
-import singer.metrics
-from singer import Transformer, metadata, metrics, utils
+from singer import Transformer, metadata, utils
 from singer.utils import strptime_to_utc
 
 LOGGER = singer.get_logger()
