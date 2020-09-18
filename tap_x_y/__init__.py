@@ -54,7 +54,6 @@ def sync(client, config, catalog, state):
                     for page in stream.sync(catalog_entry.metadata):
                         for records in page:
                             transformed_records = transform(records)
-                            print("Transformed records {}".format(transformed_records))
                             for transformed in transformed_records:
                                 singer.write_record(
                                     catalog_entry.stream,
