@@ -81,7 +81,7 @@ class Base:
 
 
 
-    def remove_hours_local(self, dttm):
+    def remove_hours_local(self, dttm): # pylint: disable=no-self-use
         new_dttm = dttm.replace(hour=0, minute=0, second=0, microsecond=0)
         return new_dttm
 

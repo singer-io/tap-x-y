@@ -26,7 +26,7 @@ class XYClient:
         self.session = requests.Session()
         self.access_token = config.get('token')
 
-    def build_url(self, baseurl, path, args_dict):
+    def build_url(self, baseurl, path, args_dict): # pylint: disable=no-self-use
         # Returns a list in the structure of urlparse.ParseResult
         url_parts = list(urllib.parse.urlparse(baseurl))
         url_parts[2] = '_g' + '/' + path
