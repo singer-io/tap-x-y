@@ -1,9 +1,8 @@
 import json
-
+import sys
 import singer
 from singer import Transformer, metadata
 from singer.utils import strftime, strptime_to_utc
-import sys
 from tap_x_y.streams import AVAILABLE_STREAMS
 from tap_x_y.client import XYClient
 from tap_x_y.catalog import generate_catalog

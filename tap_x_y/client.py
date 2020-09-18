@@ -1,6 +1,6 @@
+import urllib
 import requests
 import singer
-import urllib
 import backoff
 
 
