@@ -1,9 +1,8 @@
 import json
-
+import sys
 import singer
 from singer import Transformer, metadata
 from singer.utils import strftime, strptime_to_utc
-import sys
 from tap_x_y.streams import AVAILABLE_STREAMS
 from tap_x_y.client import XYClient
 from tap_x_y.catalog import generate_catalog
@@ -40,33 +39,27 @@ def sync(client, config, catalog, state):
                                                              state=state)
             LOGGER.info('Syncing stream: %s', catalog_entry.stream)
             stream.write_state()
-            bookmark_date = stream.get_bookmark(stream.name,
-                                                config['start_date'])
-            bookmark_dttm = strptime_to_utc(bookmark_date)
             stream_schema = catalog_entry.schema.to_dict()
             stream.write_schema()
             stream_metadata = metadata.to_map(catalog_entry.metadata)
             max_bookmark_value = None
-            
-            with singer.metrics.job_timer(job_type=stream.name) as timer:
-                with singer.metrics.record_counter(
-                        endpoint=stream.name) as counter:
-                    for page in stream.sync(catalog_entry.metadata):
-                        for records in page:
-                            transformed_records = transform(records)
-                            print("Transformed records {}".format(transformed_records))
-                            for transformed in transformed_records:
-                                singer.write_record(
-                                    catalog_entry.stream,
-                                    transformer.transform(
-                                        transformed,
-                                        stream_schema,
-                                        stream_metadata,
-                                    ))
-                                counter.increment()
-                        stream.update_bookmark(stream.name,
-                                                max_bookmark_value)
-                        stream.write_state()
+
+            with singer.metrics.record_counter(endpoint=stream.name) as counter:
+                for page in stream.sync(catalog_entry.metadata):
+                    for records in page:
+                        transformed_records = transform(records)
+                        for transformed in transformed_records:
+                            singer.write_record(
+                                catalog_entry.stream,
+                                transformer.transform(
+                                    transformed,
+                                    stream_schema,
+                                    stream_metadata,
+                                ))
+                            counter.increment()
+                    stream.update_bookmark(stream.name,
+                                            max_bookmark_value)
+                    stream.write_state()
 
         stream.write_state()
         LOGGER.info('Finished Sync..')

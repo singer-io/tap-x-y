@@ -16,7 +16,7 @@ setup(name='tap-x-y',
       ],
       extras_require={
           'dev': [
-              'pylint',
+              'pylint==2.6.0',
               'ipdb',
               'nose',
           ]

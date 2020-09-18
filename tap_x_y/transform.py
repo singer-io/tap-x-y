@@ -1,4 +1,3 @@
-import humps
 import re
 import singer
 
@@ -48,7 +47,6 @@ def convert_json(this_json):
 
 def denest(this_json):
     new_json = {}
-    index = 0
     if isinstance(this_json, dict):
         for key, value in this_json.items():
             if isinstance(this_json[key], dict):
@@ -63,7 +61,7 @@ def denest(this_json):
     elif isinstance(this_json, list):
         for item in this_json:
             denest(item)
-        
+
     return new_json
 
 def transform(this_json):

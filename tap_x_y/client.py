@@ -1,6 +1,6 @@
+import urllib
 import requests
 import singer
-import urllib
 import backoff
 
 
@@ -18,7 +18,7 @@ class Server5xxError(Exception):
 class Server42xRateLimitError(Exception):
     pass
 
-
+# pylint: disable=logging-fstring-interpolation
 class XYClient:
 
     def __init__(self, config):
@@ -26,7 +26,7 @@ class XYClient:
         self.session = requests.Session()
         self.access_token = config.get('token')
 
-    def build_url(self, baseurl, path, args_dict):
+    def build_url(self, baseurl, path, args_dict): # pylint: disable=no-self-use
         # Returns a list in the structure of urlparse.ParseResult
         url_parts = list(urllib.parse.urlparse(baseurl))
         url_parts[2] = '_g' + '/' + path
@@ -35,7 +35,6 @@ class XYClient:
 
     def get_resources(self, path, filter_param=None):
         page_from = 0
-        total = 1
 
         args = {
             'size': PAGE_SIZE,
@@ -44,12 +43,11 @@ class XYClient:
         if filter_param:
             args = {**args, **filter_param}
 
-        next = self.build_url(BASE_URL, path, args)
+        next = self.build_url(BASE_URL, path, args) # pylint: disable=redefined-builtin
 
         rows_in_response = 1
         while rows_in_response > 0:
             response = self.make_request(method='GET', url=next)
-            total = response.get('total')
             data = (response.get('rows'))
             rows_in_response = len(data)
             page_from += PAGE_SIZE
@@ -57,6 +55,7 @@ class XYClient:
             next = self.build_url(BASE_URL, path, args)
             yield data
 
+    #pylint: disable=unused-argument
     @backoff.on_exception(
         backoff.expo,
         (Server5xxError, ConnectionError, Server42xRateLimitError),
@@ -80,16 +79,16 @@ class XYClient:
             response = self.session.get(url, headers=headers)
         else:
             raise Exception("Unsupported HTTP method")
-        
+
         result = []
         try:
             result = response.json()
         except ConnectionError:
-            raise ConnectionError
+            raise ConnectionError #pylint: disable=raise-missing-from
 
         if response.status_code >= 500:
             raise Server5xxError()
 
-        LOGGER.info("Received code: {}".format(response.status_code))
+        LOGGER.info(f"Received code: {response.status_code}")
 
         return result

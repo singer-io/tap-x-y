@@ -1,16 +1,21 @@
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-import humps
 import singer
-import singer.metrics
-from singer import Transformer, metadata, metrics, utils
+from singer import utils
 from singer.utils import strptime_to_utc
 
 LOGGER = singer.get_logger()
 DEFAULT_ATTRIBUTION_WINDOW = 90
 
+# pylint: disable=logging-fstring-interpolation
 class Base:
+    valid_replication_keys = None
+    replication_key = None
+    bookmark_field = None
+    get_endpoint = lambda: 1+1
+    name = None
+
     # Todo: add lookback as attribution window
     def __init__(self, client=None, config=None, catalog=None, state=None):
         self.client = client
@@ -45,8 +50,7 @@ class Base:
         if 'bookmarks' not in self.state:
             self.state['bookmarks'] = {}
         self.state['bookmarks'][stream] = value
-        LOGGER.info('Stream: {} - Write state, bookmark value: {}'.format(
-            stream, value))
+        LOGGER.info(f'Stream: {stream} - Write state, bookmark value: {value}')
         self.write_state()
 
     def get_bookmark(self, stream, default):
@@ -76,7 +80,7 @@ class Base:
 
 
 
-    def remove_hours_local(self, dttm):
+    def remove_hours_local(self, dttm): # pylint: disable=no-self-use
         new_dttm = dttm.replace(hour=0, minute=0, second=0, microsecond=0)
         return new_dttm
 
@@ -110,35 +114,31 @@ class Base:
         abs_start, abs_end = self.round_times(start, now_dttm)
         return abs_start, abs_end
 
+    #pylint: disable=unused-argument
     def sync(self, mdata):
-        schema = self.load_schema()
+        if self.replication_key:
 
-        with singer.metrics.job_timer(job_type=self.name) as timer:
-            with singer.metrics.record_counter(endpoint=self.name) as counter:
+            # Bookmark datetimes
+            last_datetime = str(self.get_bookmark(
+                self.name, self.config.get('start_date')))
+            last_dttm = strptime_to_utc(last_datetime)
 
-                if self.replication_key:
+            # Get absolute start and end times
+            attribution_window = int(
+                self.config.get("attribution_window", DEFAULT_ATTRIBUTION_WINDOW))
+            abs_start, abs_end = self.get_absolute_start_end_time(last_dttm,
+                                                            attribution_window)
 
-                    # Bookmark datetimes
-                    last_datetime = str(self.get_bookmark(
-                        self.name, self.config.get('start_date')))
-                    last_dttm = strptime_to_utc(last_datetime)
+            window_start = abs_start
 
-                    # Get absolute start and end times
-                    attribution_window = int(
-                        self.config.get("attribution_window", DEFAULT_ATTRIBUTION_WINDOW))
-                    abs_start, abs_end = self.get_absolute_start_end_time(last_dttm,
-                                                                    attribution_window)
+            while window_start <= abs_end:
+                result = self.get_resources_by_date(window_start)
+                window_start = window_start + timedelta(
+                    days=self.date_window_size)
+                yield result
 
-                    window_start = abs_start
-
-                    while window_start <= abs_end:
-                        result = self.get_resources_by_date(window_start)
-                        window_start = window_start + timedelta(
-                            days=self.date_window_size)
-                        yield result
-                
-                else:
-                    yield self.get_resources()
+        else:
+            yield self.get_resources()
 
 
 class CommerceSalesOrderline(Base):
