@@ -43,7 +43,7 @@ class XYClient:
         if filter_param:
             args = {**args, **filter_param}
 
-        next = self.build_url(BASE_URL, path, args)
+        next = self.build_url(BASE_URL, path, args) # pylint: disable=redefined-builtin
 
         rows_in_response = 1
         while rows_in_response > 0:
