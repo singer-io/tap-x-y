@@ -8,6 +8,7 @@ from singer.utils import strptime_to_utc
 LOGGER = singer.get_logger()
 DEFAULT_ATTRIBUTION_WINDOW = 90
 
+# pylint: disable=logging-fstring-interpolation
 class Base:
     valid_replication_keys = None
     replication_key = None
@@ -49,8 +50,7 @@ class Base:
         if 'bookmarks' not in self.state:
             self.state['bookmarks'] = {}
         self.state['bookmarks'][stream] = value
-        LOGGER.info('Stream: {} - Write state, bookmark value: {}'.format(
-            stream, value))
+        LOGGER.info(f'Stream: {stream} - Write state, bookmark value: {value}')
         self.write_state()
 
     def get_bookmark(self, stream, default):

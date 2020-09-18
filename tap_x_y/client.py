@@ -18,7 +18,7 @@ class Server5xxError(Exception):
 class Server42xRateLimitError(Exception):
     pass
 
-
+# pylint: disable=logging-fstring-interpolation
 class XYClient:
 
     def __init__(self, config):
@@ -89,6 +89,6 @@ class XYClient:
         if response.status_code >= 500:
             raise Server5xxError()
 
-        LOGGER.info("Received code: {}".format(response.status_code))
+        LOGGER.info(f"Received code: {response.status_code}")
 
         return result
