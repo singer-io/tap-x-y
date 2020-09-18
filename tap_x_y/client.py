@@ -84,7 +84,7 @@ class XYClient:
         try:
             result = response.json()
         except ConnectionError:
-            raise ConnectionError
+            raise ConnectionError #pylint: disable=raise-missing-from
 
         if response.status_code >= 500:
             raise Server5xxError()
