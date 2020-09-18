@@ -21,7 +21,7 @@ jobs:
           name: 'JSON Validator'
           command: |
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
-            stitch-validate-json /usr/local/share/virtualenvs/tap-x-y/lib/python3.5/site-packages/tap_x-y/schemas/*.json
+            stitch-validate-json /usr/local/share/virtualenvs/tap-x-y/lib/python3.6/site-packages/tap_x-y/schemas/*.json
       - add_ssh_keys
 workflows:
   version: 2
