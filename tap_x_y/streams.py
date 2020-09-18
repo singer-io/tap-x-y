@@ -111,34 +111,29 @@ class Base:
         return abs_start, abs_end
 
     def sync(self, mdata):
-        schema = self.load_schema()
+        if self.replication_key:
 
-        with singer.metrics.job_timer(job_type=self.name) as timer:
-            with singer.metrics.record_counter(endpoint=self.name) as counter:
+            # Bookmark datetimes
+            last_datetime = str(self.get_bookmark(
+                self.name, self.config.get('start_date')))
+            last_dttm = strptime_to_utc(last_datetime)
 
-                if self.replication_key:
+            # Get absolute start and end times
+            attribution_window = int(
+                self.config.get("attribution_window", DEFAULT_ATTRIBUTION_WINDOW))
+            abs_start, abs_end = self.get_absolute_start_end_time(last_dttm,
+                                                            attribution_window)
 
-                    # Bookmark datetimes
-                    last_datetime = str(self.get_bookmark(
-                        self.name, self.config.get('start_date')))
-                    last_dttm = strptime_to_utc(last_datetime)
+            window_start = abs_start
 
-                    # Get absolute start and end times
-                    attribution_window = int(
-                        self.config.get("attribution_window", DEFAULT_ATTRIBUTION_WINDOW))
-                    abs_start, abs_end = self.get_absolute_start_end_time(last_dttm,
-                                                                    attribution_window)
+            while window_start <= abs_end:
+                result = self.get_resources_by_date(window_start)
+                window_start = window_start + timedelta(
+                    days=self.date_window_size)
+                yield result
 
-                    window_start = abs_start
-
-                    while window_start <= abs_end:
-                        result = self.get_resources_by_date(window_start)
-                        window_start = window_start + timedelta(
-                            days=self.date_window_size)
-                        yield result
-                
-                else:
-                    yield self.get_resources()
+        else:
+            yield self.get_resources()
 
 
 class CommerceSalesOrderline(Base):

@@ -47,7 +47,6 @@ def convert_json(this_json):
 
 def denest(this_json):
     new_json = {}
-    index = 0
     if isinstance(this_json, dict):
         for key, value in this_json.items():
             if isinstance(this_json[key], dict):

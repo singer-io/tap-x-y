@@ -35,7 +35,6 @@ class XYClient:
 
     def get_resources(self, path, filter_param=None):
         page_from = 0
-        total = 1
 
         args = {
             'size': PAGE_SIZE,
@@ -49,7 +48,6 @@ class XYClient:
         rows_in_response = 1
         while rows_in_response > 0:
             response = self.make_request(method='GET', url=next)
-            total = response.get('total')
             data = (response.get('rows'))
             rows_in_response = len(data)
             page_from += PAGE_SIZE
