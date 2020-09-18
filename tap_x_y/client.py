@@ -35,12 +35,14 @@ class XYClient:
         self.session = requests.Session()
         self.access_token = config.get('token')
 
-    def build_url(self, baseurl, path, space_uri, api_user, args_dict):
+    @staticmethod
+    def build_url(baseurl, path, space_uri, api_user, args_dict):
         # Returns a list in the structure of urlparse.ParseResult
         # https://developer.xyretail.com/_g/spaces-identity.toddsnyder/worksheet/sheetTemplate/commerce.salesorderline-9518699780000999/
         # customV4/aaron.pugliese@bytecode.io
         url_parts = list(urllib.parse.urlparse(baseurl))
-        url_parts[2] = '_g/' + space_uri +'/worksheet/sheetTemplate/' + path + '/customV4/' + api_user
+        url_parts[
+            2] = '_g/' + space_uri + '/worksheet/sheetTemplate/' + path + '/customV4/' + api_user
         url_parts[4] = urllib.parse.urlencode(args_dict)
         return urllib.parse.urlunparse(url_parts)
 
@@ -51,16 +53,16 @@ class XYClient:
         if filter_param:
             args = {**args, **filter_param}
 
-        next = self.build_url(BASE_URL, path, space_uri, api_user, args)
+        next_url = self.build_url(BASE_URL, path, space_uri, api_user, args)
 
         rows_in_response = 1
         while rows_in_response > 0:
-            response = self.make_request(method='GET', url=next)
+            response = self.make_request(method='GET', url=next_url)
             data = (response.get('rows'))
             rows_in_response = len(data)
             page_from += PAGE_SIZE
             args['from'] = page_from
-            next = self.build_url(BASE_URL, path, space_uri, api_user, args)
+            next_url = self.build_url(BASE_URL, path, space_uri, api_user, args)
             yield data
         yield []
 
@@ -72,9 +74,7 @@ class XYClient:
     def make_request(self,
                      method,
                      url=None,
-                     params=None,
-                     data=None,
-                     stream=False):
+                     params=None):
 
         headers = {'Authorization': 'Bearer {}'.format(self.access_token)}
 
@@ -84,24 +84,23 @@ class XYClient:
         try:
             if method == "GET":
                 LOGGER.info(
-                    f"Making {method} request to {url} with params: {params}")
+                    "Making %s request to %s with params: %s", method, url, params)
                 response = self.session.get(url, headers=headers)
             else:
                 raise Exception("Unsupported HTTP method")
         except (ConnectionError, ProtocolError) as ex:
-            LOGGER.info("Retrying on connection error {}".format(ex))
+            LOGGER.info("Retrying on connection error %s", ex)
             raise ConnectionError
 
-        LOGGER.info("Received code: {}".format(response.status_code))
+        LOGGER.info("Received code: %s", response.status_code)
 
         if response.status_code >= 500:
-            LOGGER.info(f"")
             raise Server5xxError()
 
         result = []
         try:
             result = response.json()
         except ConnectionError:
-            pprint("Response json parse failed: {}".format(response))
+            pprint("Response json parse failed: %s", response)
 
         return result

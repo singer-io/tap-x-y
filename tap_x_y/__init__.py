@@ -1,15 +1,15 @@
+import datetime
 import json
+import sys
+from _datetime import timezone
 
 import singer
 from singer import Transformer, metadata
-from singer.utils import strftime, strptime_to_utc, now
-import sys
-from tap_x_y.streams import AVAILABLE_STREAMS
-from tap_x_y.client import XYClient
+from singer.utils import now, strftime, strptime_to_utc
 from tap_x_y.catalog import generate_catalog
+from tap_x_y.client import XYClient
+from tap_x_y.streams import AVAILABLE_STREAMS
 from tap_x_y.transform import transform
-import datetime
-from _datetime import timezone
 
 LOGGER = singer.get_logger()
 
@@ -30,8 +30,6 @@ def sync(client, config, catalog, state):
     streams = []
     stream_keys = []
 
-    extraction_ts = now()
-
     with Transformer() as transformer:
         for catalog_entry in selected_streams:
             streams.append(catalog_entry)
@@ -51,20 +49,17 @@ def sync(client, config, catalog, state):
             stream_schema = catalog_entry.schema.to_dict()
             stream.write_schema()
             stream_metadata = metadata.to_map(catalog_entry.metadata)
-            max_bookmark_value = None
             new_bookmark = bookmark_dttm
 
-            with singer.metrics.job_timer(job_type=stream.name) as timer:
+            with singer.metrics.job_timer(job_type=stream.name):
                 with singer.metrics.record_counter(
                         endpoint=stream.name) as counter:
-                    for page in stream.sync(
-                            catalog_entry.metadata, bookmark_dttm):
-                        transformed_records = transform(
-                            page, extraction_ts, stream.key_properties)
-                        for transformed in transformed_records:                                
+                    for page in stream.sync(bookmark_dttm):
+                        transformed_records = transform(page)
+                        for transformed in transformed_records:
                             record_bookmark = datetime.datetime.fromtimestamp(transformed.get('last_modified')/1000.0, tz=timezone.utc)
                             new_bookmark = max(new_bookmark, record_bookmark)
-                            
+
                             if record_bookmark > bookmark_dttm:
                                 singer.write_record(
                                     catalog_entry.stream,

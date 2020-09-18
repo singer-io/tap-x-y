@@ -1,32 +1,19 @@
-from abc import ABC, abstractmethod
-
+# pylint: disable=E1101
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-import humps
 import singer
-import singer.metrics
-from singer import Transformer, metadata, metrics, utils
 from singer.utils import strptime_to_utc
 
 LOGGER = singer.get_logger()
 
-class IncrementalSync(ABC):
-
-    def sync(self, mdata, bookmark):
-        schema = self.load_schema()
-        return self.get_resources_by_date(bookmark)
 
 class BaseStream:
-    
     def __init__(self, client=None, config=None, catalog=None, state=None):
         self.client = client
         self.config = config
         self.catalog = catalog
         self.state = state
-        self.top = 50
-        self.date_window_size = 1
-        self.size = 100
 
     @staticmethod
     def get_abs_path(path):
@@ -34,13 +21,11 @@ class BaseStream:
 
     def load_schema(self):
         schema_path = self.get_abs_path('schemas')
-        # pylint: disable=no-member
         return singer.utils.load_json('{}/{}.json'.format(
             schema_path, self.name))
 
     def write_schema(self):
         schema = self.load_schema()
-        # pylint: disable=no-member
         return singer.write_schema(stream_name=self.name,
                                    schema=schema,
                                    key_properties=self.key_properties)
@@ -52,8 +37,8 @@ class BaseStream:
         if 'bookmarks' not in self.state:
             self.state['bookmarks'] = {}
         self.state['bookmarks'][stream] = value
-        LOGGER.info('Stream: {} - Write state, bookmark value: {}'.format(
-            stream, value))
+        LOGGER.info('Stream: %s - Write state, bookmark value: %s', stream,
+                    value)
         self.write_state()
 
     # Currently syncing sets the stream currently being delivered in the state.
@@ -62,7 +47,7 @@ class BaseStream:
     # Reference: https://github.com/singer-io/singer-python/blob/master/singer/bookmarks.py#L41-L46
     def update_currently_syncing(self):
         if (self.name is None) and ('currently_syncing' in self.state):
-            del state['currently_syncing']
+            del self.state['currently_syncing']
         else:
             singer.set_currently_syncing(self.state, self.name)
         singer.write_state(self.state)
@@ -86,12 +71,16 @@ class BaseStream:
         filter_param = {
             self.bookmark_field + '.filter.start': int(date.timestamp()) * 1000
         }
-        return self.client.get_resources(self.get_endpoint(), self.config.get('space_uri'), self.config.get('api_user'), filter_param)
+        return self.client.get_resources(self.get_endpoint(),
+                                         self.config.get('space_uri'),
+                                         self.config.get('api_user'),
+                                         filter_param)
 
     def get_resources(self):
         return self.client.get_resources(self.get_endpoint())
 
-    def remove_hours_local(self, dttm):
+    @staticmethod
+    def remove_hours_local(dttm):
         new_dttm = dttm.replace(hour=0, minute=0, second=0, microsecond=0)
         return new_dttm
 
@@ -102,7 +91,11 @@ class BaseStream:
         start_rounded = self.remove_hours_local(start) - timedelta(days=1)
         return start_rounded
 
-class SalesOrderline(BaseStream, IncrementalSync):
+    def sync(self, bookmark):
+        return self.get_resources_by_date(bookmark)
+
+
+class SalesOrderline(BaseStream):
     name = 'sales_order_line'
     key_properties = ['id']
     replication_method = 'INCREMENTAL'
@@ -117,7 +110,7 @@ class SalesOrderline(BaseStream, IncrementalSync):
             sales_order_line=self.config.get('sales_order_line'))
 
 
-class Customer(BaseStream, IncrementalSync):
+class Customer(BaseStream):
     name = 'customer'
     key_properties = ['id']
     replication_method = 'INCREMENTAL'
@@ -129,7 +122,7 @@ class Customer(BaseStream, IncrementalSync):
         return self.endpoint.format(customer=self.config.get('customer'))
 
 
-class Inventory(BaseStream, IncrementalSync):
+class Inventory(BaseStream):
     name = 'inventory'
     key_properties = ['id']
     replication_method = 'INCREMENTAL'
@@ -141,7 +134,7 @@ class Inventory(BaseStream, IncrementalSync):
         return self.endpoint.format(inventory=self.config.get('inventory'))
 
 
-class Invoice(BaseStream, IncrementalSync):
+class Invoice(BaseStream):
     name = 'invoice'
     key_properties = ['id']
     key_properties = ['id']
@@ -154,7 +147,7 @@ class Invoice(BaseStream, IncrementalSync):
         return self.endpoint.format(invoice=self.config.get('invoice'))
 
 
-class InventoryMovement(BaseStream, IncrementalSync):
+class InventoryMovement(BaseStream):
     name = 'inventory_movement'
     key_properties = ['id']
     replication_method = 'INCREMENTAL'
@@ -167,7 +160,7 @@ class InventoryMovement(BaseStream, IncrementalSync):
             inventory_movement=self.config.get('inventory_movement'))
 
 
-class Item(BaseStream, IncrementalSync):
+class Item(BaseStream):
     name = 'item'
     key_properties = ['id']
     replication_method = 'INCREMENTAL'
@@ -179,7 +172,7 @@ class Item(BaseStream, IncrementalSync):
         return self.endpoint.format(item=self.config.get('item'))
 
 
-class StockTransfer(BaseStream, IncrementalSync):
+class StockTransfer(BaseStream):
     name = 'stock_transfer'
     key_properties = ['id']
     replication_method = 'INCREMENTAL'

@@ -1,5 +1,4 @@
 import singer
-from functools import reduce
 from singer import metadata
 
 

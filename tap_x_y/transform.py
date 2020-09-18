@@ -1,8 +1,6 @@
-import humps
 import re
+
 import singer
-from singer.utils import strftime
-import uuid
 
 LOGGER = singer.get_logger()
 
@@ -51,7 +49,6 @@ def convert_json(this_json):
 
 def denest(this_json):
     new_json = {}
-    index = 0
     if isinstance(this_json, dict):
         for key, value in this_json.items():
             if isinstance(this_json[key], dict):
@@ -67,7 +64,7 @@ def denest(this_json):
     return new_json
 
 
-def transform(this_json, extraction_ts, key_properties):
+def transform(this_json):
     snake = convert_json(this_json)
     denested = [denest(nested) for nested in snake]
     return denested
