@@ -10,6 +10,12 @@ LOGGER = singer.get_logger()
 DEFAULT_ATTRIBUTION_WINDOW = 90
 
 class Base:
+    valid_replication_keys = None
+    replication_key = None
+    bookmark_field = None
+    get_endpoint = None
+    name = None
+
     # Todo: add lookback as attribution window
     def __init__(self, client=None, config=None, catalog=None, state=None):
         self.client = client
