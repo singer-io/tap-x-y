@@ -13,7 +13,7 @@ class Base:
     valid_replication_keys = None
     replication_key = None
     bookmark_field = None
-    get_endpoint = None
+    get_endpoint = lambda: 1+1
     name = None
 
     # Todo: add lookback as attribution window
