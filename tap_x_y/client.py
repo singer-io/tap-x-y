@@ -55,6 +55,7 @@ class XYClient:
             next = self.build_url(BASE_URL, path, args)
             yield data
 
+    #pylint: disable=unused-argument
     @backoff.on_exception(
         backoff.expo,
         (Server5xxError, ConnectionError, Server42xRateLimitError),
@@ -78,7 +79,7 @@ class XYClient:
             response = self.session.get(url, headers=headers)
         else:
             raise Exception("Unsupported HTTP method")
-        
+
         result = []
         try:
             result = response.json()

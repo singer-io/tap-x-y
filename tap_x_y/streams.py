@@ -114,6 +114,7 @@ class Base:
         abs_start, abs_end = self.round_times(start, now_dttm)
         return abs_start, abs_end
 
+    #pylint: disable=unused-argument
     def sync(self, mdata):
         if self.replication_key:
 
