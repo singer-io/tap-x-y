@@ -90,7 +90,7 @@ class XYClient:
                 raise Exception("Unsupported HTTP method")
         except (ConnectionError, ProtocolError) as ex:
             LOGGER.info("Retrying on connection error %s", ex)
-            raise ConnectionError
+            raise ConnectionError from ex
 
         LOGGER.info("Received code: %s", response.status_code)
 
