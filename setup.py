@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name='tap-x-y',
-      version='0.0.1',
+      version='0.0.2',
       description='Singer.io tap for extracting data from the XY API',
       author='scott.coleman@bytecode.io',
       classifiers=['Programming Language :: Python :: 3 :: Only'],
@@ -16,7 +16,7 @@ setup(name='tap-x-y',
       ],
       extras_require={
           'dev': [
-              'pylint==2.6.0',
+              'pylint',
               'ipdb',
               'nose',
           ]
